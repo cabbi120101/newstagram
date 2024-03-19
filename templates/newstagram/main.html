@@ -303,59 +303,103 @@
 </div>
 
 <!-- 첫번째 모달 -->
-<div id="first_modal" class="modal_overlay">
-    <div class="modal_window">
-        <div style="display: flex; flex-direction: row; justify-content: space-between">
-            <div style="width: 40px; background: gray">
-
-            </div>
-            <div>
-                새 이미지 업로드
-            </div>
-            <div style="width: 40px; background: gray">
-                <span class="modal_close material-icons-outlined">close</span>
-            </div>
+<div id="first_modal" class="modal_overlay" onclick="closeModal(event)">
+    <div class="modal_window" style="position: relative;" onclick="event.stopPropagation();">
+        <!-- 닫기 버튼 -->
+        <div style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background-color: transparent; border: 2px solid transparent; border-radius: 5px; cursor: pointer;" 
+             onmouseover="this.style.backgroundColor='red'; document.getElementById('closeIcon').style.color='white';" 
+             onmouseout="this.style.backgroundColor='transparent'; document.getElementById('closeIcon').style.color='black';">
+            <span id="closeIcon" class="modal_close material-icons-outlined" style="color: black;">close</span>
         </div>
-
-        <div class="img_upload_space" style="border-top: solid 1px gray;width: 778px; height: 540px;margin-top: 10px">
-
+        <div style="display: flex; flex-direction: column; align-items: center; padding: 10px;">
+            <div style="margin-bottom: 10px;">
+                이미지 업로드
+            </div>
+            <!-- 이미지 업로드 영역 -->
+            <div class="img_upload_space" style="border: 1px solid #ccc; width: 100%; min-height: 50vh; display: flex; justify-content: center; align-items: center; background-color: #f0f0f0; margin-top: 20px;">
+                <!-- 이미지 드래그 영역 -->
+                <div id="imageUploadArea" style="text-align: center;">
+                    <p>이미지를 드래그 해주세요.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    function closeModal(event) {
+        var modal = document.getElementById('first_modal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
+
+
 
 <!-- 두번째 모달 -->
 <div id="second_modal" class="modal_overlay">
     <div class="modal_window">
-        <div style="display: flex; flex-direction: row; justify-content: space-between">
-            <div style="width: 40px; background: gray">
-
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+            <div style="width: 50%; overflow: hidden;">
+                <!-- 이미지 확인 영역 -->
+                <img src="#" id="uploaded_image" alt="Uploaded Image" style="width: 100%; height: auto;">
             </div>
-            <div>
-                새 이미지 업로드
-            </div>
-            <div style="width: 40px; background: gray">
-                <span class="modal_close material-icons-outlined">close</span>
-            </div>
-        </div>
-
-        <div style="border-top: solid 1px gray;display: flex; flex-direction: row;margin-top: 10px">
-            <div class="img_upload_space" style="width: 500px; height: 540px;">
-
-            </div>
-            <div style="border-left: solid 1px gray">
-                <div>
-                    <textarea id="input_feed_content" class="form-control" style="width: 276px; height: 400px"
-                              id="exampleFormControlTextarea1" rows="5"></textarea>
+            <div style="width: 50%;">
+                <!-- 닫기 버튼 -->
+                <div style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background-color: transparent; border: 2px solid transparent; border-radius: 5px; cursor: pointer;"
+                     onmouseover="this.style.backgroundColor='red'; document.getElementById('closeIcon').style.color='white';"
+                     onmouseout="this.style.backgroundColor='transparent'; document.getElementById('closeIcon').style.color='black';">
+                    <span id="closeIcon" class="modal_close material-icons-outlined" style="color: black;">close</span>
                 </div>
-                <button id="feed_create_button" type="button" class="btn btn-primary" style="width: 100%">
-                    공유하기
-                </button>
+                <!-- 게시글 입력 영역 -->
+                <div style="margin-top: 20px;">
+                    <textarea id="post_text" class="form-control" style="width: 100%; height: 200px; margin-bottom: 10px;" placeholder="게시글을 입력하세요..."></textarea>
+                </div>
+                <!-- 자동 생성된 태그 입력 영역 -->
+                <div style="margin-top: 10px;">
+                    <input type="text" id="tag_input" class="form-control" style="width: 100%;" placeholder="태그를 입력하세요...">
+                </div>
+                <!-- 공유하기 버튼 -->
+                <div style="margin-top: 10px;">
+                    <button id="share_button" class="btn btn-primary" style="width: 100%;" onclick="sharePost()">공유하기</button>
+                </div>
             </div>
-
         </div>
-
     </div>
 </div>
+
+<script>
+// 두번째 모달 열기
+function openSecondModal(imageSrc) {
+    // 이미지 확인 영역에 업로드된 이미지 표시
+    var uploadedImage = document.getElementById('uploaded_image');
+    uploadedImage.src = imageSrc;
+
+    // 두번째 모달 보이기
+    var secondModal = document.getElementById('second_modal');
+    secondModal.style.display = 'block';
+}
+
+// 공유하기 버튼 클릭 시 실행되는 함수
+function sharePost() {
+    // 게시글 내용
+    var postText = document.getElementById('post_text').value;
+    // 태그 입력 값
+    var tags = document.getElementById('tag_input').value;
+
+    // 여기에서 게시글과 태그 정보를 서버로 전송하여 저장하는 Ajax 요청 등의 작업을 수행할 수 있습니다.
+}
+
+// 두번째 모달 닫기
+function closeSecondModal() {
+    var secondModal = document.getElementById('second_modal');
+    secondModal.style.display = 'none';
+}
+</script>
+
+
+{% comment %} 여기까지 {% endcomment %}
 
 <!-- Optional JavaScript; choose one of the two! -->
 <script>

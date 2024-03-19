@@ -7,6 +7,10 @@ from user.models import User
 import os
 from newstagram.settings import MEDIA_ROOT
 
+# 태그 붙이기 기능을 위해 추가
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import AnalyzedImage, Tag, FeedTagMapping
 
 class Main(APIView):
     def get(self, request):
@@ -48,27 +52,55 @@ class Main(APIView):
 
         return render(request, "newstagram/main.html", context=dict(feeds=feed_list, user=user))
 
+# 기존 코드
+# class UploadFeed(APIView):
+#     def post(self, request):
 
+#         # 일단 파일 불러와
+#         file = request.FILES['file']
+
+#         uuid_name = uuid4().hex
+#         save_path = os.path.join(MEDIA_ROOT, uuid_name)
+
+#         with open(save_path, 'wb+') as destination:
+#             for chunk in file.chunks():
+#                 destination.write(chunk)
+
+#         asdf = uuid_name
+#         content123 = request.data.get('content')
+#         email = request.session.get('email', None)
+
+#         Feed.objects.create(image=asdf, content=content123, email=email)
+
+#         return Response(status=200)
+
+## 이미지 태그를 저장하는 코드
 class UploadFeed(APIView):
     def post(self, request):
-
-        # 일단 파일 불러와
+        # 파일 불러오기
         file = request.FILES['file']
 
+        # 이미지 저장 경로 설정
         uuid_name = uuid4().hex
         save_path = os.path.join(MEDIA_ROOT, uuid_name)
 
+        # 이미지 저장
         with open(save_path, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
 
-        asdf = uuid_name
-        content123 = request.data.get('content')
-        email = request.session.get('email', None)
+        # 이미지 분석 및 태깅
+        analyzed_image = AnalyzedImage.objects.create(image=save_path)
+        analyzed_image.analyze_and_tag()
 
-        Feed.objects.create(image=asdf, content=content123, email=email)
+        # 분석된 이미지의 태그를 DB에 저장
+        tags = analyzed_image.tags.split(', ')
+        for tag_name in tags:
+            tag, _ = Tag.objects.get_or_create(name=tag_name.strip())  # 태그가 이미 존재하면 가져오고, 없으면 생성
+            FeedTagMapping.objects.create(feed=analyzed_image, tag=tag)  # 피드와 태그 간의 매핑 저장
 
-        return Response(status=200)
+        return Response({'tags': analyzed_image.tags}, status=200)
+
 
 
 class Profile(APIView):
