@@ -302,6 +302,7 @@
     </div>
 </div>
 
+
 <!-- 첫번째 모달 -->
 <div id="first_modal" class="modal_overlay" onclick="closeModal(event)">
     <div class="modal_window" style="position: relative;" onclick="event.stopPropagation();">
@@ -324,61 +325,86 @@
             </div>
         </div>
     </div>
+    <div id="tags_display"></div>
 </div>
-
-<script>
-    function closeModal(event) {
-        var modal = document.getElementById('first_modal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    }
-</script>
-
-
 
 <!-- 두번째 모달 -->
 <div id="second_modal" class="modal_overlay">
-    <div class="modal_window">
-        <div style="display: flex; flex-direction: row; justify-content: space-between;">
-            <div style="width: 50%; overflow: hidden;">
-                <!-- 이미지 확인 영역 -->
-                <img src="#" id="uploaded_image" alt="Uploaded Image" style="width: 100%; height: auto;">
+    <div class="modal_window" style="display: flex; flex-direction: row;">
+        <div style="width: 50%; border-right: 2px solid black; padding: 10px;"> <!-- 추가: 테두리와 좌측 패딩 -->
+            <!-- 이미지 확인 영역 -->
+            <div class="img_upload_space" style="width: 100%; height: 100%; border: 2px solid black;"> <!-- 수정: 테두리 추가 -->
             </div>
-            <div style="width: 50%;">
-                <!-- 닫기 버튼 -->
-                <div style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background-color: transparent; border: 2px solid transparent; border-radius: 5px; cursor: pointer;"
-                     onmouseover="this.style.backgroundColor='red'; document.getElementById('closeIcon').style.color='white';"
-                     onmouseout="this.style.backgroundColor='transparent'; document.getElementById('closeIcon').style.color='black';">
-                    <span id="closeIcon" class="modal_close material-icons-outlined" style="color: black;">close</span>
-                </div>
-                <!-- 게시글 입력 영역 -->
-                <div style="margin-top: 20px;">
-                    <textarea id="post_text" class="form-control" style="width: 100%; height: 200px; margin-bottom: 10px;" placeholder="게시글을 입력하세요..."></textarea>
-                </div>
-                <!-- 자동 생성된 태그 입력 영역 -->
-                <div style="margin-top: 10px;">
-                    <input type="text" id="tag_input" class="form-control" style="width: 100%;" placeholder="태그를 입력하세요...">
-                </div>
-                <!-- 공유하기 버튼 -->
-                <div style="margin-top: 10px;">
-                    <button id="share_button" class="btn btn-primary" style="width: 100%;" onclick="sharePost()">공유하기</button>
-                </div>
+        </div>
+        <div style="width: 50%;">
+            <!-- 닫기 버튼 -->
+            <div style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background-color: transparent; border: 2px solid transparent; border-radius: 5px; cursor: pointer;"
+                 onmouseover="this.style.backgroundColor='red'; document.getElementById('closeIcon').style.color='white';"
+                 onmouseout="this.style.backgroundColor='transparent'; document.getElementById('closeIcon').style.color='black';">
+                <span id="closeIcon" class="modal_close material-icons-outlined" style="color: black;">close</span>
+            </div>
+            <!-- 게시글 입력 영역 -->
+            <div style="margin-top: 20px; padding: 10px;">
+                <textarea id="post_text" class="form-control" style="width: 100%; height: 200px; margin-bottom: 10px;" placeholder="게시글을 입력하세요..."></textarea>
+            </div>
+            <!-- 자동 생성된 태그 입력 영역 -->
+            <div style="margin-top: 10px; padding: 10px;">
+                <input type="text" id="tag_input" class="form-control" style="width: 100%;" placeholder="태그를 입력하세요...">
+            </div>
+            <!-- 공유하기 버튼 -->
+            <div style="margin-top: 10px; padding: 10px;">
+                <button id="feed_create_button"  type="button" class="btn btn-primary" style="width: 100%;" onclick="sharePost()">공유하기</button>
             </div>
         </div>
     </div>
 </div>
 
+
 <script>
-// 두번째 모달 열기
-function openSecondModal(imageSrc) {
-    // 이미지 확인 영역에 업로드된 이미지 표시
-    var uploadedImage = document.getElementById('uploaded_image');
-    uploadedImage.src = imageSrc;
+// 첫 번째 모달에서 업로드된 이미지를 저장할 변수
+var uploadedImageSrc = null;
+
+// 첫 번째 모달 닫기 함수
+function closeFirstModal() {
+    // 첫 번째 모달 닫기
+    var firstModal = document.getElementById('first_modal');
+    firstModal.style.display = 'none';
+
+    // 이미지 분석하여 태그 가져오기
+    analyzeImageTags(uploadedImageSrc, function(tags) {
+        // 두 번째 모달 열기
+        openSecondModalWithTags(tags);
+    });
+}
+
+// 두 번째 모달 열기
+function openSecondModalWithTags(tags) {
+    // 태그 입력란에 태그 표시
+    var tagInput = document.getElementById('second_modal_tag_input');
+    tagInput.value = tags.join(', '); // 태그 배열을 쉼표로 구분하여 입력란에 표시
 
     // 두번째 모달 보이기
     var secondModal = document.getElementById('second_modal');
     secondModal.style.display = 'block';
+}
+
+// 이미지 분석하여 태그 가져오는 함수
+function analyzeImageTags(imageSrc, callback) {
+    // AJAX를 사용하여 이미지를 서버로 전송하고 분석된 태그를 받아오는 요청을 보냅니다.
+    // 서버에서는 이미지를 분석하고 해당 이미지에 대한 태그를 응답합니다.
+    $.ajax({
+        url: "/content/analyze_image_tags",
+        method: "POST",
+        data: { imageSrc: imageSrc },
+        success: function(response) {
+            var tags = response.tags; // 응답에서 분석된 태그 데이터를 가져옵니다.
+            callback(tags); // 분석된 태그를 콜백 함수에 전달합니다.
+            console.log('작동 됨');
+        },
+        error: function(xhr, status, error) {
+            console.error("Error:", error); // 에러 처리
+        }
+    });
 }
 
 // 공유하기 버튼 클릭 시 실행되는 함수
@@ -395,6 +421,16 @@ function sharePost() {
 function closeSecondModal() {
     var secondModal = document.getElementById('second_modal');
     secondModal.style.display = 'none';
+}
+
+// 이미지 업로드 영역 초기화 함수
+function resetUploadArea() {
+    $('.img_upload_space').css({
+        "background-image": "none",
+        "background-color": "#f0f0f0",
+        "outline": "1px dashed #ccc"
+    });
+    $('#imageUploadArea').html('<p>이미지를 드래그 해주세요.</p>');
 }
 </script>
 
@@ -511,15 +547,16 @@ function closeSecondModal() {
 
     let files;
 
+    // 첫 번째 모달 열기 함수 수정
     $('#nav_bar_add_box').click(function () {
+        // 이미지 업로드 영역 초기화
+        resetUploadArea();
         $('#first_modal').css({
             display: 'flex'
         });
-
         $(document.body).css({
             overflow: 'hidden'
         });
-
     });
 
     $('#feed_create_button').click(function () {
@@ -576,11 +613,14 @@ function closeSecondModal() {
     }
 
     function uploadFiles(e) {
+        console.log("uploadFiles 함수 실행됨"); // 디버깅 문장 추가
+        console.log("files 변수 값:", files); // 디버깅 문장 추가
         e.stopPropagation();
         e.preventDefault();
 
         e.dataTransfer = e.originalEvent.dataTransfer; //2
         files = e.target.files || e.dataTransfer.files;
+        console.log("업로드 파일:", files); // 디버깅 문장 추가
         console.log("뭔가 파일을 올렸네??" + files[0].name);
         if (files.length > 1) {
             alert('하나만 올려라.');

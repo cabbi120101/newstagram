@@ -52,33 +52,65 @@ class Main(APIView):
 
         return render(request, "newstagram/main.html", context=dict(feeds=feed_list, user=user))
 
-# 기존 코드
-# class UploadFeed(APIView):
-#     def post(self, request):
+## 이미지 분석 함수
+from django.http import JsonResponse
 
-#         # 일단 파일 불러와
-#         file = request.FILES['file']
+def analyze_image_tags(request):
+    if request.method == 'POST':
+        # POST 요청에서 이미지 데이터를 받아옵니다.
+        image_src = request.POST.get('imageSrc')
 
-#         uuid_name = uuid4().hex
-#         save_path = os.path.join(MEDIA_ROOT, uuid_name)
+        # 이미지 분석 및 태그 작업을 수행하는 코드를 여기에 추가합니다.
+        # 예시로, AnalyzedImage 모델에서 해당 이미지를 분석하고 태그를 가져오는 코드를 사용합니다.
+        analyzed_tags = analyze_image(image_src)
 
-#         with open(save_path, 'wb+') as destination:
-#             for chunk in file.chunks():
-#                 destination.write(chunk)
+        # 분석된 태그를 JSON 형식으로 응답합니다.
+        return JsonResponse({'tags': analyzed_tags})
 
-#         asdf = uuid_name
-#         content123 = request.data.get('content')
-#         email = request.session.get('email', None)
+    # POST 요청이 아닌 경우, 잘못된 요청으로 간주하고 에러 응답을 반환합니다.
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
-#         Feed.objects.create(image=asdf, content=content123, email=email)
+## 자동 태깅 모델 tensorflow 사용
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+from tensorflow.keras.applications.resnet50 import preprocess_input
+from tensorflow.keras.applications.resnet50 import decode_predictions
 
-#         return Response(status=200)
+def extract_tags_from_image(image_path):
+    # 이미지 불러오기 및 전처리
+    img = Image.open(image_path)
+    img = img.resize((224, 224))  # ResNet 모델의 입력 크기에 맞게 조정
+    img_array = np.array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = preprocess_input(img_array)
+
+    # ResNet50 모델 불러오기
+    model = tf.keras.applications.ResNet50(weights='imagenet')
+
+    # 이미지에서 태그 추출
+    predictions = model.predict(img_array)
+    decoded_predictions = decode_predictions(predictions, top=3)[0]  # 상위 3개의 예측을 가져옴
+
+    # 추출된 태그 반환
+    tags = [tag[1] for tag in decoded_predictions]  # 예측 결과에서 태그만 추출
+    return tags
+
+def analyze_image(image_src):
+    # 이미지 분석 및 태그 작업을 수행하는 코드를 여기에 추가합니다.
+    # 예시로, 이미지를 분석하고 태그를 추출하는 함수를 사용합니다.
+    analyzed_tags = extract_tags_from_image(image_src)
+    return analyzed_tags
 
 ## 이미지 태그를 저장하는 코드
 class UploadFeed(APIView):
     def post(self, request):
         # 파일 불러오기
         file = request.FILES['file']
+        user = request.user  # 사용자 정보 가져오기
+
+        # 게시물 번호 가져오기
+        feed_number = request.data.get('feed_number')
 
         # 이미지 저장 경로 설정
         uuid_name = uuid4().hex
@@ -99,9 +131,21 @@ class UploadFeed(APIView):
             tag, _ = Tag.objects.get_or_create(name=tag_name.strip())  # 태그가 이미 존재하면 가져오고, 없으면 생성
             FeedTagMapping.objects.create(feed=analyzed_image, tag=tag)  # 피드와 태그 간의 매핑 저장
 
+        # 사용자가 입력한 태그 정보 저장
+        user_tags = request.data.get('user_tags', None)
+        if user_tags:
+            user_tags = user_tags.split(',')
+            for tag_name in user_tags:
+                tag, _ = Tag.objects.get_or_create(name=tag_name.strip())
+                FeedTagMapping.objects.create(feed=analyzed_image, tag=tag)
+
+        # 게시물 번호와 사용자 정보 저장
+        if feed_number:
+            analyzed_image.feed_number = feed_number
+        analyzed_image.user = user
+        analyzed_image.save()
+
         return Response({'tags': analyzed_image.tags}, status=200)
-
-
 
 class Profile(APIView):
     def get(self, request):
