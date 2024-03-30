@@ -16,8 +16,89 @@
             rel="stylesheet">
 
     <!-- Jquery -->
-    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-latest.min.js"></script>
+    <script>
+                // 첫 번째 모달에서 업로드된 이미지를 저장할 변수
+        var uploadedImageSrc = null;
 
+        // 첫 번째 모달 닫기 함수
+        function closeFirstModal() {
+            // 첫 번째 모달 닫기
+            var firstModal = document.getElementById('first_modal');
+            firstModal.style.display = 'none';
+
+            // 이미지 분석하여 태그 가져오기
+            analyzeImageTags(uploadedImageSrc, function(tags) {
+                // 두 번째 모달 열기 전에 태그를 입력란에 자동으로 채워 넣음
+                openSecondModalWithTags(tags); // 수정된 부분
+            });
+        }
+            
+        // 이미지 분석하여 태그 가져오기 함수
+        function analyzeImageTags(file) {
+            console.log('analyzeImageTags 함수 실행됨'); // 디버깅 문장 추가
+            // 이미지 분석 로직 추가
+            // FormData를 생성하고 이미지 파일을 추가
+            var formData = new FormData();
+            formData.append('image', file);
+
+            // AJAX를 사용하여 이미지를 서버로 전송하고 분석된 태그를 받아옴
+            $.ajax({
+                url: "/content/analyze_image_tags",
+                method: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    var tags = response.tags; // 응답에서 분석된 태그 데이터를 가져옴
+                    openSecondModalWithTags(tags); // 두 번째 모달 열기 함수 호출
+                    console.log('작동 됨');
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error:", error); // 에러 처리
+                }
+            });
+        }
+
+        // 두 번째 모달 열기 함수 (태그 정보 전달)
+        function openSecondModalWithTags(tags) {
+            // 태그 입력란에 태그 표시
+            console.log('hi')
+            var tagInput = document.getElementById('second_modal_tag_input');
+            tagInput.value = tags.join(', '); // 태그 배열을 쉼표로 구분하여 입력란에 표시
+
+            // 두 번째 모달 보이기
+            var secondModal = document.getElementById('second_modal');
+            secondModal.style.display = 'block';
+        }
+
+
+        // 공유하기 버튼 클릭 시 실행되는 함수
+        function sharePost() {
+            // 게시글 내용
+            var postText = document.getElementById('post_text').value;
+            // 태그 입력 값
+            var tags = document.getElementById('second_modal_tag_input').value;
+
+            // 여기에서 게시글과 태그 정보를 서버로 전송하여 저장하는 Ajax 요청 등의 작업을 수행할 수 있습니다.
+        }
+
+        // 두번째 모달 닫기
+        function closeSecondModal() {
+            var secondModal = document.getElementById('second_modal');
+            secondModal.style.display = 'none';
+        }
+
+        // 이미지 업로드 영역 초기화 함수
+        function resetUploadArea() {
+            $('.img_upload_space').css({
+                "background-image": "none",
+                "background-color": "#f0f0f0",
+                "outline": "1px dashed #ccc"
+            });
+            $('#imageUploadArea').html('<p>이미지를 드래그 해주세요.</p>');
+        }
+    </script>
     <title>Hello, world!</title>
 
     <style>
@@ -70,6 +151,7 @@
     </style>
 </head>
 <body>
+{% csrf_token %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light" style="position: fixed;width: 100%; z-index: 999">
     <div class="container-fluid" style="justify-content: space-between;flex-wrap: nowrap; min-width: 1000px">
         <a class="navbar-brand" href="main"><img style="width: 100px"
@@ -302,7 +384,6 @@
     </div>
 </div>
 
-
 <!-- 첫번째 모달 -->
 <div id="first_modal" class="modal_overlay" onclick="closeModal(event)">
     <div class="modal_window" style="position: relative;" onclick="event.stopPropagation();">
@@ -349,7 +430,7 @@
             </div>
             <!-- 자동 생성된 태그 입력 영역 -->
             <div style="margin-top: 10px; padding: 10px;">
-                <input type="text" id="tag_input" class="form-control" style="width: 100%;" placeholder="태그를 입력하세요...">
+                <input type="text" id="second_modal_tag_input" class="form-control" style="width: 100%;" placeholder="태그를 입력하세요..."> <!-- 수정: id 변경 -->
             </div>
             <!-- 공유하기 버튼 -->
             <div style="margin-top: 10px; padding: 10px;">
@@ -360,7 +441,7 @@
 </div>
 
 
-<script>
+<!-- <script>
 // 첫 번째 모달에서 업로드된 이미지를 저장할 변수
 var uploadedImageSrc = null;
 
@@ -412,7 +493,7 @@ function sharePost() {
     // 게시글 내용
     var postText = document.getElementById('post_text').value;
     // 태그 입력 값
-    var tags = document.getElementById('tag_input').value;
+    var tags = document.getElementById('second_modal_tag_input').value;
 
     // 여기에서 게시글과 태그 정보를 서버로 전송하여 저장하는 Ajax 요청 등의 작업을 수행할 수 있습니다.
 }
@@ -432,10 +513,10 @@ function resetUploadArea() {
     });
     $('#imageUploadArea').html('<p>이미지를 드래그 해주세요.</p>');
 }
-</script>
+</script> -->
 
 
-{% comment %} 여기까지 {% endcomment %}
+<!-- 여기까지 -->
 
 <!-- Optional JavaScript; choose one of the two! -->
 <script>
@@ -542,12 +623,12 @@ function resetUploadArea() {
         });
         $('#second_modal').css({
             display: 'none'
-        });
+        }); 
     });
 
     let files;
 
-    // 첫 번째 모달 열기 함수 수정
+        // 첫 번째 모달 열기 함수 수정
     $('#nav_bar_add_box').click(function () {
         // 이미지 업로드 영역 초기화
         resetUploadArea();
@@ -558,6 +639,58 @@ function resetUploadArea() {
             overflow: 'hidden'
         });
     });
+
+    // 이미지 업로드 영역 클릭 시 input 파일 열기
+    $('.img_upload_space').click(function () {
+        $('#imageInput').click();
+    });
+
+    // input 파일 변경 시 실행되는 함수
+    $('#imageInput').change(function () {
+        let file = this.files[0];
+
+        // 이미지 유형 확인
+        if (file.type.match(/image.*/)) {
+            // 파일 유효성 확인 후 첫 번째 모달 닫고 두 번째 모달 열기
+            $('#first_modal').css({ display: 'none' });
+            analyzeImageTags(file);
+        } else {
+            alert('이미지가 아닙니다.');
+        }
+    });
+
+    // 이미지 분석하여 태그 가져오기 함수
+    function analyzeImageTags(file) {
+        // 이미지 분석 로직 추가
+        // AJAX를 사용하여 이미지를 서버로 전송하고 분석된 태그를 받아옴
+        $.ajax({
+            url: "/content/analyze_image_tags",
+            method: "POST",
+            data: new FormData($('#imageUploadForm')[0]), // FormData에 이미지 추가
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                var tags = response.tags; // 응답에서 분석된 태그 데이터를 가져옴
+                openSecondModalWithTags(tags); // 두 번째 모달 열기 함수 호출
+                console.log('작동 됨');
+            },
+            error: function (xhr, status, error) {
+                console.error("Error:", error); // 에러 처리
+            }
+        });
+    }
+
+    // 두 번째 모달 열기 함수 (태그 정보 전달)
+    function openSecondModalWithTags(tags) {
+        console.log('두번째 모달 열기')
+        // 태그 입력란에 태그 표시
+        var tagInput = document.getElementById('second_modal_tag_input');
+        tagInput.value = tags.join(', '); // 태그 배열을 쉼표로 구분하여 입력란에 표시
+
+        // 두 번째 모달 보이기
+        var secondModal = document.getElementById('second_modal');
+        secondModal.style.display = 'block';
+    }
 
     $('#feed_create_button').click(function () {
         alert("공유하기 눌렀다.");
@@ -643,6 +776,10 @@ function resetUploadArea() {
                 "background-repeat": "no-repeat",
                 "background-position": "center"
             });
+
+            // 수정된 부분: 파일 업로드 후 analyzeImageTags 함수 호출
+            console.log('실행 확인')
+            analyzeImageTags(files[0]);
         } else {
             alert('이미지가 아닙니다.');
             return;

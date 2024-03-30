@@ -26,7 +26,4 @@ urlpatterns = [
     path('main/', Main.as_view()),
     path('content/', include('content.urls')),
     path('user/', include('user.urls')),
-    path('content/analyze_image_tags', views.analyze_image_tags, name='analyze_image_tags'),
-]
-
-urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)
+] + static(MEDIA_URL, document_root=MEDIA_ROOT)
