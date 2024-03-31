@@ -44,8 +44,11 @@
 
             // AJAX를 사용하여 이미지를 서버로 전송하고 분석된 태그를 받아옴
             $.ajax({
-                url: "/content/analyze_image_tags",
+                url: "/content/analyze_image_tags/",
                 method: "POST",
+                headers: {
+                    "X-CSRFToken": csrfToken // CSRF 토큰을 헤더에 포함
+                },
                 data: formData,
                 contentType: false,
                 processData: false,
@@ -99,6 +102,9 @@
             $('#imageUploadArea').html('<p>이미지를 드래그 해주세요.</p>');
         }
     </script>
+    <script>
+        const csrfToken = "{{ csrf_token }}";
+    </script>
     <title>Hello, world!</title>
 
     <style>
@@ -151,7 +157,6 @@
     </style>
 </head>
 <body>
-{% csrf_token %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light" style="position: fixed;width: 100%; z-index: 999">
     <div class="container-fluid" style="justify-content: space-between;flex-wrap: nowrap; min-width: 1000px">
         <a class="navbar-brand" href="main"><img style="width: 100px"
@@ -169,7 +174,7 @@
                     <div class="box" style="width: 25px; height: 25px">
 
                         <img class="profile"
-                             src="{% get_media_prefix %}{{ user.profile_image }}">
+                            src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% get_media_prefix %}default_profile.png{% endif %}">
 
                     </div>
                 </a>
@@ -196,7 +201,7 @@
                 <div style="display: flex;flex-direction: row; align-items: center; margin: 20px">
                     <div class="box" style="width: 35px; height: 35px">
                         <img class="profile"
-                             src="{% get_media_prefix %}{{ feed.profile_image }}">
+                             src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% get_media_prefix %}default_profile.png{% endif %}">
                     </div>
                     <div>
                         {{ feed.nickname }}
@@ -256,7 +261,7 @@
         <div style="display: flex;flex-direction: row; align-items: center; margin: 20px">
             <div class="box" style="width: 70px; height: 70px">
                 <img class="profile"
-                     src="{% get_media_prefix %}{{ user.profile_image }}">
+                    src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% get_media_prefix %}default_profile.png{% endif %}">
             </div>
             <div style="margin-left: 10px; text-align: left">
                 <div style="font-weight: bold">
@@ -664,8 +669,11 @@ function resetUploadArea() {
         // 이미지 분석 로직 추가
         // AJAX를 사용하여 이미지를 서버로 전송하고 분석된 태그를 받아옴
         $.ajax({
-            url: "/content/analyze_image_tags",
+            url: "/content/analyze_image_tags/",
             method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken // CSRF 토큰을 헤더에 포함
+            },
             data: new FormData($('#imageUploadForm')[0]), // FormData에 이미지 추가
             contentType: false,
             processData: false,
